@@ -8,14 +8,13 @@
 
 import UIKit
 
-@MainActor
 protocol PresenterDelegate: AnimationDelegate {
     func hide(presenter: Presenter)
 }
 
 @MainActor
 class Presenter: NSObject {
-    
+
     // MARK: - API
 
     init(config: SwiftMessages.Config, view: UIView, delegate: PresenterDelegate) {

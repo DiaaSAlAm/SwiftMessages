@@ -9,7 +9,7 @@
 import UIKit
 
 /// The theme enum specifies the built-in theme options
-public enum Theme {
+public enum Theme: String {
     case info
     case success
     case warning

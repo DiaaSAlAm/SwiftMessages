@@ -335,17 +335,18 @@ extension MessageView {
      - Parameter backgroundColor: The background color to use.
      - Parameter foregroundColor: The foreground color to use.
      */
-    public func configureTheme(backgroundColor: UIColor, foregroundColor: UIColor, iconImage: UIImage? = nil, iconText: String? = nil) {
+ 
+    public func configureTheme(buttonTintColor: UIColor? = nil, titleColor: UIColor? = nil,bodyColor: UIColor? = nil, backgroundColor: UIColor, foregroundColor: UIColor, iconImage: UIImage? = nil, iconText: String? = nil) {
         iconImageView?.image = iconImage
         iconLabel?.text = iconText
         iconImageView?.tintColor = foregroundColor
         let backgroundView = self.backgroundView ?? self
         backgroundView.backgroundColor = backgroundColor
         iconLabel?.textColor = foregroundColor
-        titleLabel?.textColor = foregroundColor
-        bodyLabel?.textColor = foregroundColor
+        titleLabel?.textColor = titleColor ?? foregroundColor
+        bodyLabel?.textColor = bodyColor ?? foregroundColor
         button?.backgroundColor = foregroundColor
-        button?.tintColor = backgroundColor
+        button?.tintColor = buttonTintColor ?? backgroundColor
         button?.contentEdgeInsets = UIEdgeInsets(top: 7.0, left: 7.0, bottom: 7.0, right: 7.0)
         button?.layer.cornerRadius = 5.0
         iconImageView?.isHidden = iconImageView?.image == nil

@@ -9,36 +9,15 @@ import SwiftUI
 
 @available(iOS 14.0, *)
 public extension View {
-    /// A view modifier for displaying a message using similar semantics to the `.sheet()` modifier.
+    /// A state-based modifier for displaying a message when `Message` does not conform to `MessageViewConvertible`. This variant is more flexible and
+    /// should be used if the message view can't be represented as pure data, such as if it requires a delegate, has callbacks, etc.
     func swiftMessage<Message, MessageContent>(
         message: Binding<Message?>,
         config: SwiftMessages.Config? = nil,
         swiftMessages: SwiftMessages? = nil,
         @ViewBuilder messageContent: @escaping (Message) -> MessageContent
     ) -> some View where Message: Equatable & Identifiable, MessageContent: View {
-        swiftMessage(message: message, config: config, swiftMessages: swiftMessages) { message, _ in
-            messageContent(message)
-        }
-    }
-
-    /// A view modifier for displaying a message using similar semantics to the `.sheet()` modifier. This variant provides a
-    /// `SwiftMessageGeometryProxy`. The proxy is useful when one needs to know the geometry metrics of the container view,
-    /// particularly because `GeometryReader` doesn't work inside the view builder due to the way the message view is being
-    /// displayed from UIKit.
-    func swiftMessage<Message, MessageContent>(
-        message: Binding<Message?>,
-        config: SwiftMessages.Config? = nil,
-        swiftMessages: SwiftMessages? = nil,
-        @ViewBuilder messageContent: @escaping (Message, MessageGeometryProxy) -> MessageContent
-    ) -> some View where Message: Equatable & Identifiable, MessageContent: View {
-        modifier(
-            SwiftMessageModifier(
-                message: message,
-                config: config,
-                swiftMessages: swiftMessages,
-                messageContent: messageContent
-            )
-        )
+        modifier(SwiftMessageModifier(message: message, config: config, swiftMessages: swiftMessages, messageContent: messageContent))
     }
 
     /// A state-based modifier for displaying a message when `Message` conforms to `MessageViewConvertible`. This variant should be used if the message
@@ -68,20 +47,6 @@ private struct SwiftMessageModifier<Message, MessageContent>: ViewModifier where
         _message = message
         self.config = config
         self.swiftMessages = swiftMessages
-        self.messageContent = { message, _ in
-            messageContent(message)
-        }
-    }
-
-    fileprivate init(
-        message: Binding<Message?>,
-        config: SwiftMessages.Config? = nil,
-        swiftMessages: SwiftMessages? = nil,
-        @ViewBuilder messageContent: @escaping (Message, MessageGeometryProxy) -> MessageContent
-    ) {
-        _message = message
-        self.config = config
-        self.swiftMessages = swiftMessages
         self.messageContent = messageContent
     }
 
@@ -93,9 +58,7 @@ private struct SwiftMessageModifier<Message, MessageContent>: ViewModifier where
         _message = message
         self.config = config
         self.swiftMessages = swiftMessages
-        self.messageContent = { message, _ in
-            message.asMessageView()
-        }
+        self.messageContent = { $0.asMessageView() }
     }
 
     // MARK: - Constants
@@ -105,7 +68,7 @@ private struct SwiftMessageModifier<Message, MessageContent>: ViewModifier where
     @Binding private var message: Message?
     private let config: SwiftMessages.Config?
     private let swiftMessages: SwiftMessages?
-    @ViewBuilder private let messageContent: (Message, MessageGeometryProxy) -> MessageContent
+    @ViewBuilder private let messageContent: (Message) -> MessageContent
 
     // MARK: - Body
 
@@ -116,7 +79,7 @@ private struct SwiftMessageModifier<Message, MessageContent>: ViewModifier where
                 let hideAll: @MainActor () -> Void = swiftMessages?.hideAll ?? SwiftMessages.hideAll
                 switch message {
                 case let message?:
-                    let view = MessageHostingView(message: message, content: messageContent)
+                    let view = MessageHostingView(id: message.id, content: messageContent(message))
                     var config = config ?? swiftMessages?.defaultConfig ?? SwiftMessages.defaultConfig
                     config.eventListeners.append { event in
                         if case .didHide = event, event.id == self.message?.id {
